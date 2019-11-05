@@ -20,20 +20,15 @@ task copy(type: Copy, group: "mobile", description: "Copies components to dest f
 }
 
 task startEmulators(type:Exec, group: "mobile") {
-  def ports = (0..numberOfThings-1).collect { it * 2 + startingEmulatorPort }
-  println(ports)
+    def ports = (0..numberOfThings-1).collect { it * 2 + startingEmulatorPort }
+    println(ports)
+    workingDir '.'
 
-  workingDir '.'
-  commandLine "echo", "something"
 
     // 0. check if already running, run stopEmulators if so, or do nothing
 
     // 1. add devices with avdmanager
     ext.createDevices = { portsToAssign ->
-        exec {
-            commandLine 'echo', "ugh"
-        }
-
         portsToAssign.each { port ->
             exec {
                 commandLine 'echo', "port $port"
@@ -42,21 +37,18 @@ task startEmulators(type:Exec, group: "mobile") {
         }
     }
 
-//     createDevices(ports)
-
     // 2. Run startEmulators
 
     // 3. Target `react-native run-android' with appropriate emulator ids
 
+    doFirst {
+        createDevices(ports)
+    }
+
     doLast {
-        println("during DoLast")
-        println('ports=' + ports)
-
-
-        // 4. list running devices
-
-        commandLine 'avdmanager', 'list'
-//         commandLine 'echo', ports
+        exec {
+            commandLine 'avdmanager', 'list'
+        }
     }
 }
 
@@ -73,5 +65,7 @@ task stopEmulators(type:Exec, group: "mobile") {
         }
     }
 
-    deleteDevices(ports)
+    doFirst {
+        deleteDevices(ports)
+    }
 }
