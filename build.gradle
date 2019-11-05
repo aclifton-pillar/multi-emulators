@@ -29,11 +29,6 @@ task startEmulators(type:Exec, group: "mobile") {
     // 0. check if already running, run stopEmulators if so, or do nothing
 
     // 1. add devices with avdmanager
-
-    // 2. Run startEmulators
-
-    // 3. Target `react-native run-android' with appropriate emulator ids
-
     ext.createDevices = { portsToAssign ->
         exec {
             commandLine 'echo', "ugh"
@@ -42,16 +37,21 @@ task startEmulators(type:Exec, group: "mobile") {
         portsToAssign.each { port ->
             exec {
                 commandLine 'echo', "port $port"
-                commandLine 'avdmanager', 'create', 'avd', '--name', "test_$port", '--package', 'system-images;android-28;google_apis_playstore;x86'
+                commandLine 'avdmanager', 'create', 'avd', '--name', "test_$port", '--package', 'system-images;android-28;google_apis_playstore;x86', '--device', 'Nexus 5X'
             }
         }
     }
+
+//     createDevices(ports)
+
+    // 2. Run startEmulators
+
+    // 3. Target `react-native run-android' with appropriate emulator ids
 
     doLast {
         println("during DoLast")
         println('ports=' + ports)
 
-        createDevices(ports)
 
         // 4. list running devices
 
@@ -61,7 +61,17 @@ task startEmulators(type:Exec, group: "mobile") {
 }
 
 task stopEmulators(type:Exec, group: "mobile") {
+    def ports = (0..numberOfThings-1).collect { it * 2 + startingEmulatorPort }
     // 1. get list of running startEmulators
 
     // 2. kill them all, with fire
+    ext.deleteDevices = { portsToAssign ->
+        portsToAssign.each { port ->
+            exec {
+                commandLine 'avdmanager', 'delete', 'avd', '--name', "test_$port"
+            }
+        }
+    }
+
+    deleteDevices(ports)
 }
