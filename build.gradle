@@ -21,6 +21,7 @@ task createDevices(group: "mobile") {
             println("Creating device test_$port")
             exec {
                 commandLine 'avdmanager', 'create', 'avd', '--name', "test_$port", '--package', 'system-images;android-28;google_apis_playstore;x86', '--device', 'Nexus 5X'
+                standardOutput = new ByteArrayOutputStream();
             }
         }
     }
@@ -64,25 +65,19 @@ task launchApps(group: "mobile", dependsOn: "spawnEmulators") {
     ext.launchApps = { ->
         ports.each { port ->
             println("starting app on test_$port")
-            // maybe have to move to app's working directory here later
             exec {
-                commandLine 'react-native', 'run-android', '--deviceId', "test_$port"
+                // maybe have to workingDir to app's directory here later
+                commandLine 'react-native', 'run-android', '--deviceId', "emulator-$port"
             }
         }
     }
 
-    doFirst {
+    doLast {
         launchApps()
     }
 }
 
-task start(group: "mobile", dependsOn: "launchApps") {
-    doLast {
-        exec {
-            commandLine 'avdmanager', 'list'
-        }
-    }
-}
+task start(group: "mobile", dependsOn: "launchApps") { }
 
 task stopEmulators(group: "mobile") {
     ext.stopEmulators = {
