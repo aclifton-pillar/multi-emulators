@@ -6,44 +6,59 @@
  */
 plugins {
     id "base"
+    id "com.wiredforcode.spawn" version '0.8.2'
 }
 
 description = 'A monstrous gradle build from another dimension'
 version = '999.0'
 
 def numberOfThings = 3
-def startingEmulatorPort = 5554
+def startingEmulatorPort = 5574
+def ports = (0..numberOfThings-1).collect { it * 2 + startingEmulatorPort }
 
 task copy(type: Copy, group: "mobile", description: "Copies components to dest for no reason") {
     from "components"
     into "dest"
 }
 
-task startEmulators(type:Exec, group: "mobile") {
-    def ports = (0..numberOfThings-1).collect { it * 2 + startingEmulatorPort }
-    println(ports)
-    workingDir '.'
-
-
-    // 0. check if already running, run stopEmulators if so, or do nothing
-
-    // 1. add devices with avdmanager
-    ext.createDevices = { portsToAssign ->
-        portsToAssign.each { port ->
+task createDevices(group: "mobile") {
+    ext.createDevices = { ->
+        ports.each { port ->
+            println("Creating device test_$port")
             exec {
-                commandLine 'echo', "port $port"
                 commandLine 'avdmanager', 'create', 'avd', '--name', "test_$port", '--package', 'system-images;android-28;google_apis_playstore;x86', '--device', 'Nexus 5X'
             }
         }
     }
 
-    // 2. Run startEmulators
+    doFirst {
+        createDevices()
+    }
+}
 
-    // 3. Target `react-native run-android' with appropriate emulator ids
+task spawnEmulators(group: "mobile", dependsOn: "createDevices") {
+    ext.startEmulators = { ->
+        ports.each { port ->
+            println("Starting emulator test_$port")
+//             command "emulator -port $port @test_$port"
+            ProcessBuilder emulator = new ProcessBuilder()
+            emulator.command('emulator', '-port', "$port", "@test_$port")
+            emulator.start()
+        }
+    }
 
     doFirst {
-        createDevices(ports)
+        startEmulators()
     }
+}
+
+task startEmulators(group: "mobile", dependsOn: "spawnEmulators") {
+    println(ports)
+
+    // 0. check if already running, run stopEmulators if so, or do nothing
+    // 1. add devices with avdmanager
+    // 2. Run startEmulators
+    // 3. Target `react-native run-android' with appropriate emulator ids
 
     doLast {
         exec {
@@ -52,8 +67,7 @@ task startEmulators(type:Exec, group: "mobile") {
     }
 }
 
-task stopEmulators(type:Exec, group: "mobile") {
-    def ports = (0..numberOfThings-1).collect { it * 2 + startingEmulatorPort }
+task stopEmulators(group: "mobile") {
     // 1. get list of running startEmulators
 
     // 2. kill them all, with fire
