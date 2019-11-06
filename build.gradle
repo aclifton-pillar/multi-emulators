@@ -7,15 +7,17 @@
 plugins {
     id "base"
     id "com.wiredforcode.spawn" version '0.8.2'
-
 }
 
 description = 'A gradle build for running multiple mobile emulators'
 version = '0.0'
 
 def numberOfThings = 3
+def numberOfIPhones = 3
 def startingEmulatorPort = 5574
 def ports = (0..numberOfThings-1).collect { it * 2 + startingEmulatorPort }
+
+def iPhoneDeviceKeys = []
 
 task createDevices(group: "mobile") {
     ext.createDevices = { ->
@@ -28,8 +30,21 @@ task createDevices(group: "mobile") {
         }
     }
 
+    ext.createIOSDevices = { ->
+        for(int deviceIndex: 1..numberOfIPhones) {
+            def output = new ByteArrayOutputStream()
+            exec {
+                commandLine "xcrun", "simctl", "create", "iphone-$deviceIndex", "com.apple.CoreSimulator.SimDeviceType.iPhone-11", "com.apple.CoreSimulator.SimRuntime.iOS-13-2"
+                standardOutput = output
+            }
+            iPhoneDeviceKeys.push("$output".trim())
+        }
+    }
+
     doFirst {
         createDevices()
+        createIOSDevices()
+        println(iPhoneDeviceKeys)
     }
 }
 
