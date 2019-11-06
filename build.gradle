@@ -67,8 +67,17 @@ task spawnEmulators(group: "mobile", dependsOn: "createDevices") {
         }
     }
 
+    ext.startIosSimulators = { ->
+        for(int deviceIndex: 1..numberOfIPhones) {
+            exec {
+                commandLine "xcrun", "simctl", "boot", "iphone-$deviceIndex"
+            }
+        }
+    }
+
     doFirst {
         startEmulators()
+        startIosSimulators()
         waitForEmulatorsToStart()
     }
 }
@@ -91,7 +100,16 @@ task launchApps(group: "mobile", dependsOn: "launchMetroBundler") {
         }
     }
 
+    ext.launchAppsOnIPhones = { ->
+        for(int deviceIndex: 1..numberOfIPhones) {
+            exec {
+                commandLine "react-native", "run-ios", "--simulator", "iphone-$deviceIndex"
+            }
+        }
+    }
+
     doLast {
+        launchAppsOnIPhones()
         launchApps()
     }
 }
@@ -111,8 +129,17 @@ task stopEmulators(group: "mobile", dependsOn: "stopMetroBundler") {
         }
     }
 
+    ext.stopIosEmulators = { ->
+        for(int deviceIndex: 1..numberOfIPhones) {
+            exec {
+                commandLine "xcrun", "simctl", "shutdown", "iphone-$deviceIndex"
+            }
+        }
+    }
+
     doFirst {
         stopEmulators()
+        stopIosEmulators()
     }
 }
 
