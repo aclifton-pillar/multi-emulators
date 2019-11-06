@@ -6,11 +6,10 @@
  */
 plugins {
     id "base"
-    id "com.wiredforcode.spawn" version '0.8.2'
 }
 
-description = 'A monstrous gradle build from another dimension'
-version = '999.0'
+description = 'A gradle build for running multiple mobile emulators'
+version = '0.0'
 
 def numberOfThings = 3
 def startingEmulatorPort = 5574
@@ -40,7 +39,6 @@ task spawnEmulators(group: "mobile", dependsOn: "createDevices") {
     ext.startEmulators = { ->
         ports.each { port ->
             println("Starting emulator test_$port")
-//             command "emulator -port $port @test_$port"
             ProcessBuilder emulator = new ProcessBuilder()
             emulator.command('emulator', '-port', "$port", "@test_$port")
             emulator.start()
@@ -52,7 +50,7 @@ task spawnEmulators(group: "mobile", dependsOn: "createDevices") {
     }
 }
 
-task startEmulators(group: "mobile", dependsOn: "spawnEmulators") {
+task start(group: "mobile", dependsOn: "spawnEmulators") {
     println(ports)
 
     // 0. check if already running, run stopEmulators if so, or do nothing
@@ -68,11 +66,26 @@ task startEmulators(group: "mobile", dependsOn: "spawnEmulators") {
 }
 
 task stopEmulators(group: "mobile") {
-    // 1. get list of running startEmulators
+    ext.stopEmulators = {
+        ports.each { port ->
+            try {
+                exec {
+                    commandLine 'adb', '-s', "emulator-$port", 'emu', 'kill'
+                }
+            } catch (Exception ex) {
+                println ex
+            }
+        }
+    }
 
-    // 2. kill them all, with fire
-    ext.deleteDevices = { portsToAssign ->
-        portsToAssign.each { port ->
+    doFirst {
+        stopEmulators()
+    }
+}
+
+task deleteDevices(group: "mobile", dependsOn: "stopEmulators") {
+    ext.deleteDevices = { ->
+        ports.each { port ->
             exec {
                 commandLine 'avdmanager', 'delete', 'avd', '--name', "test_$port"
             }
@@ -80,6 +93,8 @@ task stopEmulators(group: "mobile") {
     }
 
     doFirst {
-        deleteDevices(ports)
+        deleteDevices()
     }
 }
+
+task stop(group: "mobile", dependsOn: "deleteDevices") { }
