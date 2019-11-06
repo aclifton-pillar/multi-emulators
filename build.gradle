@@ -6,6 +6,8 @@
  */
 plugins {
     id "base"
+    id "com.wiredforcode.spawn" version '0.8.2'
+
 }
 
 description = 'A gradle build for running multiple mobile emulators'
@@ -61,7 +63,14 @@ task spawnEmulators(group: "mobile", dependsOn: "createDevices") {
     }
 }
 
-task launchApps(group: "mobile", dependsOn: "spawnEmulators") {
+task launchMetroBundler(type: SpawnProcessTask, group: "mobile", dependsOn: "spawnEmulators") {
+    command "npm run start"
+    ready "Loading dependency graph, done."
+}
+
+task stopMetroBundler(type: KillProcessTask)
+
+task launchApps(group: "mobile", dependsOn: "launchMetroBundler") {
     ext.launchApps = { ->
         ports.each { port ->
             println("starting app on test_$port")
@@ -79,7 +88,7 @@ task launchApps(group: "mobile", dependsOn: "spawnEmulators") {
 
 task start(group: "mobile", dependsOn: "launchApps") { }
 
-task stopEmulators(group: "mobile") {
+task stopEmulators(group: "mobile", dependsOn: "stopMetroBundler") {
     ext.stopEmulators = {
         ports.each { port ->
             try {
