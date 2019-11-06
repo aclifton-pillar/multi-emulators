@@ -15,11 +15,6 @@ def numberOfThings = 3
 def startingEmulatorPort = 5574
 def ports = (0..numberOfThings-1).collect { it * 2 + startingEmulatorPort }
 
-task copy(type: Copy, group: "mobile", description: "Copies components to dest for no reason") {
-    from "components"
-    into "dest"
-}
-
 task createDevices(group: "mobile") {
     ext.createDevices = { ->
         ports.each { port ->
@@ -45,19 +40,43 @@ task spawnEmulators(group: "mobile", dependsOn: "createDevices") {
         }
     }
 
+    ext.waitForEmulatorsToStart = { ->
+        while (true) {
+            def stdout = new ByteArrayOutputStream()
+            exec {
+                commandLine 'adb', 'devices'
+                standardOutput = stdout;
+            }
+            def statuses = "$stdout".split("\n").drop(1).collect { it.split()[1] }
+            println('waiting for all emulators to boot...')
+            sleep(3000)
+            if (statuses && statuses.every { it == 'device' }) break;
+        }
+    }
+
     doFirst {
         startEmulators()
+        waitForEmulatorsToStart()
     }
 }
 
-task start(group: "mobile", dependsOn: "spawnEmulators") {
-    println(ports)
+task launchApps(group: "mobile", dependsOn: "spawnEmulators") {
+    ext.launchApps = { ->
+        ports.each { port ->
+            println("starting app on test_$port")
+            // maybe have to move to app's working directory here later
+            exec {
+                commandLine 'react-native', 'run-android', '--deviceId', "test_$port"
+            }
+        }
+    }
 
-    // 0. check if already running, run stopEmulators if so, or do nothing
-    // 1. add devices with avdmanager
-    // 2. Run startEmulators
-    // 3. Target `react-native run-android' with appropriate emulator ids
+    doFirst {
+        launchApps()
+    }
+}
 
+task start(group: "mobile", dependsOn: "launchApps") {
     doLast {
         exec {
             commandLine 'avdmanager', 'list'
