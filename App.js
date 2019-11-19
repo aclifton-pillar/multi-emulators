@@ -15,7 +15,7 @@ const App = props => {
         <Text testID="time">{'Current Time: ' + time}</Text>
         }
     </View>);
-}
+};
 
 App.propTypes = {
     currentTime: PropTypes.string,
