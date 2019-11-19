@@ -1,6 +1,68 @@
 # Automation: Run Multiple Simulators and Emulators
 
-placeholder
+The primary purpose of this repository is to present a
+`build.gradle` file capable of automatically standing up
+multiple Apple iOS simulators and Android emulators
+simultaneously.
+
+Use cases for this include multiuser games, or applications
+where actions by one user are immediately reflected in 
+another user's UI.
+
+This allows for system tests that run not only across the
+frontend and backend applications, but across frontend
+application instances as well.  Or for demoing complex
+functionality between multiple instances on one
+developer workstation.
+
+## Installation
+
+`npm install` should suffice.
+
+However, if you haven't done React or React Native 
+development on your workstation yet, you may also need
+to install:
+
+* Latest version of XCode
+* Latest version of Android Studio
+
+As well as some tools:
+
+* `npm install`
+* `npm install -g detox-cli` (if you want to run e2e tests)
+* `brew tap wix/brew` (if you don't have homebrew)
+* `brew install applesimutils`
+
+## Running single instances
+
+As usual with React Native, you can run a single instance:
+
+`npm run ios`
+
+`npm run android`
+
+## Running multiple instances
+
+You can run an arbitrary number of iOS simulators and
+Android emulators, by editing the `build.gradle` file:
+
+```
+def numberOfAndroids = 3
+def numberOfIPhones = 3
+```
+
+Specify the number of each you'd like to run.  (BUG: If you
+set one of them to zero, it still runs one.)
+
+Then, you can start the instances with:
+
+`./gradlew start`
+
+It takes several minutes for them to start.
+
+When you're finished, you can run:
+
+`./gradlew stop`
 
 # Testing-Library/React versus Enzyme
 
