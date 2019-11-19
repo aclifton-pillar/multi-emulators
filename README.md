@@ -9,6 +9,11 @@ unit testing using Testing-Library/React and Enzyme.  In both
 cases, we use Jest as the test runner.  You can use any test
 runner you like.
 
+## Installation and Running Tests
+
+* `npm install`
+* `npm test`
+
 ## Outcome
 The run time for the two unit tests are very similar. 6 seconds
 versus 7.5 seconds.  However, the Enzyme test is doing a
